@@ -1,0 +1,42 @@
+OASISFormat:  0.1
+Name:         ocaml-smf
+Version:      0.0.2+dev
+License:      LGPL-2.1 with OCaml linking exception
+Authors:      Niki Yoshiuchi
+Copyrights:   (C) 2011 Niki Yoshiuchi
+BuildTools:   ocamlbuild
+Plugins:      DevFiles (0.2), META (0.2)
+
+Synopsis: OCaml bindings to smf
+Description:
+  OCaml bindings to smf
+
+Flag strict
+  Description: Strict compile-time checks
+  Default: true
+
+Library smf
+  Path: src/
+  Modules: Smf
+  if flag(strict) && ccomp_type(cc)
+    CCOpt: -std=c89 -pedantic -Wno-long-long -I/usr/include/glib-2.0 -I/usr/lib/i386-linux-gnu/glib-2.0/include/
+  CSources: smf_stubs.c
+  CCLib: -lsmf
+  BuildDepends: bigarray
+
+Executable test
+  Path: test/
+  Install: false
+  CompiledObject: best
+  MainIs: test.ml
+  BuildDepends: ocaml_portmidi, smf
+
+Document api
+  Title: API reference for smf
+  Type: ocamlbuild (0.2)
+  Authors: Niki Yoshiuchi
+  BuildTools: ocamldoc
+  Format: HTML
+  Index: index.html
+  XOCamlbuildPath:      src/
+  XOCamlbuildLibraries: smf
