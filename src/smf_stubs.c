@@ -141,3 +141,96 @@ CAMLprim value ocaml_smf_event_is_metadata(value event)
     CAMLreturn(Val_bool(ret));
 }
 
+CAMLprim value ocaml_smf_new(value unit)
+{
+    CAMLparam1(unit);
+    CAMLlocal1(ans);
+    Smf_t *t;
+    t = malloc(sizeof(Smf_t));
+    t->t = smf_new();
+    if(t->t == NULL)
+    {
+        free(t);
+        /* Error */
+        t = NULL;
+        exit(1);
+    }
+    ans = caml_alloc_custom(&smf_ops, sizeof(Smf_t*), 1, 0);
+    Smf_t_val(ans) = t;
+
+    CAMLreturn(ans);
+}
+
+CAMLprim value ocaml_smf_track_new(value unit)
+{
+    CAMLparam1(unit);
+    CAMLlocal1(ans);
+    Track_t *t;
+    t = malloc(sizeof(Track_t));
+    t->t = smf_track_new();
+    if(t->t == NULL)
+    {
+        free(t);
+        /* Error */
+        t = NULL;
+        exit(1);
+    }
+    ans = caml_alloc_custom(&track_ops, sizeof(Track_t*), 1, 0);
+    Track_t_val(ans) = t;
+
+    CAMLreturn(ans);
+}
+
+CAMLprim value ocaml_smf_add_track(value smf, value track)
+{
+    CAMLparam2(smf, track);
+    smf_add_track(Smf_val(smf), Track_val(track));
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_smf_event_new_from_pointer(value msg, value length)
+{
+    CAMLparam2(msg, length);
+    CAMLlocal2(ret,ans);
+    smf_event_t *event;
+    Event_t *et;
+    event = smf_event_new_from_pointer(Caml_ba_data_val(msg), Int_val(length));
+    if(event == NULL)
+    {
+        exit(1);
+    }
+
+    ret = caml_alloc_tuple(7);
+    Field(ret, 0) = Val_int(event->event_number);
+    Field(ret, 1) = Val_int(event->delta_time_pulses);
+    Field(ret, 2) = Val_int(event->time_pulses);
+    Field(ret, 3) = caml_copy_double(event->time_seconds);
+    Field(ret, 4) = Val_int(event->track_number);
+    Field(ret, 5) = caml_ba_alloc_dims(CAML_BA_UINT8 | CAML_BA_C_LAYOUT, 1, (void*)event->midi_buffer, event->midi_buffer_length, NULL);
+    et = malloc(sizeof(Event_t));
+    et->t = event;
+    ans = caml_alloc_custom(&event_ops, sizeof(Event_t*), 1, 0);
+    Event_t_val(ans) = et;
+    Field(ret, 6) = ans;
+
+    CAMLreturn(ret);
+}
+
+CAMLprim value ocaml_smf_track_add_event_seconds(value track, value event, value seconds)
+{
+    CAMLparam3(track, event, seconds);
+    float secs;
+    secs = (float)Int_val(seconds);
+    secs /= 1000.0f;
+    smf_track_add_event_seconds(Track_val(track), Event_val(Field(event,6)), secs);
+    CAMLreturn(Val_unit);
+}
+
+CAMLprim value ocaml_smf_save(value smf, value file)
+{
+    CAMLparam2(smf, file);
+    int ret;
+    ret = smf_save(Smf_val(smf), String_val(file));
+    CAMLreturn(Val_bool(ret));
+}
+

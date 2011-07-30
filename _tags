@@ -1,0 +1,24 @@
+# OASIS_START
+# DO NOT EDIT (digest: 1c5df54e646bd3d6a7de32acfabe5ed7)
+# Library ocaml_smf
+"src": include
+<src/*.ml{,i}>: oasis_library_ocaml_smf_ccopt
+"src/smf_stubs.c": oasis_library_ocaml_smf_ccopt
+<src/ocaml_smf.{cma,cmxa}>: oasis_library_ocaml_smf_cclib
+"src/libocaml_smf.lib": oasis_library_ocaml_smf_cclib
+"src/dllocaml_smf.dll": oasis_library_ocaml_smf_cclib
+"src/libocaml_smf.a": oasis_library_ocaml_smf_cclib
+"src/dllocaml_smf.so": oasis_library_ocaml_smf_cclib
+<src/ocaml_smf.{cma,cmxa}>: use_libocaml_smf
+<src/*.ml{,i}>: pkg_bigarray
+"src/smf_stubs.c": pkg_bigarray
+# Executable test
+<test/test.{native,byte}>: use_ocaml_smf
+<test/test.{native,byte}>: pkg_unix
+<test/test.{native,byte}>: pkg_ocaml_portmidi
+<test/test.{native,byte}>: pkg_bigarray
+<test/*.ml{,i}>: use_ocaml_smf
+<test/*.ml{,i}>: pkg_unix
+<test/*.ml{,i}>: pkg_ocaml_portmidi
+<test/*.ml{,i}>: pkg_bigarray
+# OASIS_STOP
