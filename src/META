@@ -1,10 +1,10 @@
 # OASIS_START
-# DO NOT EDIT (digest: e5012f8288db721af5de94de7a3778bc)
+# DO NOT EDIT (digest: 63adea29bd1f019fbcd0a6cc3b8bd58d)
 version = "0.0.2+dev"
 description = "OCaml bindings to smf"
 requires = "bigarray"
-archive(byte) = "smf.cma"
-archive(native) = "smf.cmxa"
-exists_if = "smf.cma"
+archive(byte) = "ocaml_smf.cma"
+archive(native) = "ocaml_smf.cmxa"
+exists_if = "ocaml_smf.cma"
 # OASIS_STOP
 

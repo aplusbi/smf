@@ -9,6 +9,7 @@ type event = {
         time_seconds : float;
         track_number : int;
 	midi_buffer : (int, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t;
+        event : event_t;
 	(*void		*user_pointer;*)
 }
 

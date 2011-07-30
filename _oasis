@@ -15,7 +15,7 @@ Flag strict
   Description: Strict compile-time checks
   Default: true
 
-Library smf
+Library ocaml_smf
   Path: src/
   Modules: Smf
   if flag(strict) && ccomp_type(cc)
@@ -29,7 +29,7 @@ Executable test
   Install: false
   CompiledObject: best
   MainIs: test.ml
-  BuildDepends: ocaml_portmidi, smf
+  BuildDepends: unix, bigarray, ocaml_portmidi, ocaml_smf
 
 Document api
   Title: API reference for smf
@@ -39,4 +39,4 @@ Document api
   Format: HTML
   Index: index.html
   XOCamlbuildPath:      src/
-  XOCamlbuildLibraries: smf
+  XOCamlbuildLibraries: ocaml_smf

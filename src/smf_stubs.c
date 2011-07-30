@@ -15,7 +15,7 @@ typedef struct
 } Smf_t;
 
 #define Smf_t_val(v) (*((Smf_t**)Data_custom_val(v)))
-#define Smf_val(v) (Smf_t_val(v))->stream
+#define Smf_val(v) (Smf_t_val(v))->t
 
 static void finalize_smf(value s)
 {
@@ -42,7 +42,7 @@ typedef struct
 } Track_t;
 
 #define Track_t_val(v) (*((Track_t**)Data_custom_val(v)))
-#define Track_val(v) (Track_t_val(v))->stream
+#define Track_val(v) (Track_t_val(v))->t
 
 static void finalize_track(value s)
 {
@@ -60,7 +60,31 @@ static struct custom_operations track_ops =
     custom_deserialize_default
 };
 
-CAMLprim value caml_smf_load(value file)
+typedef struct
+{
+    smf_event_t *t;
+} Event_t;
+
+#define Event_t_val(v) (*((Event_t**)Data_custom_val(v)))
+#define Event_val(v) (Event_t_val(v))->t
+
+static void finalize_event(value s)
+{
+  Event_t *t = Event_t_val(s);
+  free(t);
+}
+
+static struct custom_operations event_ops =
+{
+    "caml_event_t",
+    finalize_event,
+    custom_compare_default,
+    custom_hash_default,
+    custom_serialize_default,
+    custom_deserialize_default
+};
+
+CAMLprim value ocaml_smf_load(value file)
 {
     CAMLparam1(file);
     CAMLlocal1(ans);
@@ -72,6 +96,7 @@ CAMLprim value caml_smf_load(value file)
         free(t);
         /* Error */
         t = NULL;
+        exit(1);
     }
     ans = caml_alloc_custom(&smf_ops, sizeof(Smf_t*), 1, 0);
     Smf_t_val(ans) = t;
@@ -79,21 +104,40 @@ CAMLprim value caml_smf_load(value file)
     CAMLreturn(ans);
 }
 
-CAMLprim value caml_smf_get_next_event(value smf)
+CAMLprim value ocaml_smf_get_next_event(value smf)
 {
     CAMLparam1(smf);
-    CAMLlocal1(ret);
+    CAMLlocal2(ret,ans);
     smf_event_t *event;
-    event = smf_get_next_event(Smf_t_val(smf));
+    Event_t *et;
+    event = smf_get_next_event(Smf_val(smf));
+    if(event == NULL)
+    {
+        exit(1);
+    }
 
-    ret = caml_alloc_tuple(6);
+    ret = caml_alloc_tuple(7);
     Field(ret, 0) = Val_int(event->event_number);
     Field(ret, 1) = Val_int(event->delta_time_pulses);
     Field(ret, 2) = Val_int(event->time_pulses);
     Field(ret, 3) = caml_copy_double(event->time_seconds);
     Field(ret, 4) = Val_int(event->track_number);
     Field(ret, 5) = caml_ba_alloc_dims(CAML_BA_UINT8 | CAML_BA_C_LAYOUT, 1, (void*)event->midi_buffer, event->midi_buffer_length, NULL);
+    et = malloc(sizeof(Event_t));
+    et->t = event;
+    ans = caml_alloc_custom(&event_ops, sizeof(Event_t*), 1, 0);
+    Event_t_val(ans) = et;
+    Field(ret, 6) = ans;
 
-    CAMLreturn(event);
+    CAMLreturn(ret);
+}
+
+CAMLprim value ocaml_smf_event_is_metadata(value event)
+{
+    CAMLparam1(event);
+    int ret;
+    smf_event_t *e = Event_val(Field(event, 6));
+    ret = smf_event_is_metadata(e);
+    CAMLreturn(Val_bool(ret));
 }
 
