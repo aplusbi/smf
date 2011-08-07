@@ -51,7 +51,7 @@ let _ =
                     let wait = wait / 100 in
                     let str = (string_of_int wait) ^ "\n" in
                     ignore (Unix.write Unix.stdout str 0 (String.length str));
-                    Portmidi.Time.sleep wait;
+                    (*Portmidi.Time.sleep wait;*)
                     write_midi st event;
                     ()
                 end;

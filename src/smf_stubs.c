@@ -9,6 +9,11 @@
 
 #include <smf.h>
 
+static int smf_err(int i)
+{
+  caml_raise_with_arg(*caml_named_value("smf_exn_error"), Val_int(i));
+}
+
 typedef struct
 {
     smf_t *t;
@@ -84,6 +89,31 @@ static struct custom_operations event_ops =
     custom_deserialize_default
 };
 
+value create_event(smf_event_t *event)
+{
+    value ret, ans;
+    Event_t *et;
+    ret = caml_alloc_tuple(7);
+    Field(ret, 0) = Val_int(event->event_number);
+    Field(ret, 1) = Val_int(event->delta_time_pulses);
+    Field(ret, 2) = Val_int(event->time_pulses);
+    Field(ret, 3) = caml_copy_double(event->time_seconds);
+    Field(ret, 4) = Val_int(event->track_number);
+    Field(ret, 5) = caml_ba_alloc_dims(CAML_BA_UINT8 | CAML_BA_C_LAYOUT, 1, (void*)event->midi_buffer, event->midi_buffer_length, NULL);
+    et = malloc(sizeof(Event_t));
+    et->t = event;
+    ans = caml_alloc_custom(&event_ops, sizeof(Event_t*), 1, 0);
+    Event_t_val(ans) = et;
+    Field(ret, 6) = ans;
+
+    return ret;
+}
+
+smf_event_t *get_event(value event)
+{
+    return Event_val(Field(event, 6));
+}
+
 CAMLprim value ocaml_smf_load(value file)
 {
     CAMLparam1(file);
@@ -94,9 +124,8 @@ CAMLprim value ocaml_smf_load(value file)
     if(t->t == NULL)
     {
         free(t);
-        /* Error */
         t = NULL;
-        exit(1);
+        smf_err(0);
     }
     ans = caml_alloc_custom(&smf_ops, sizeof(Smf_t*), 1, 0);
     Smf_t_val(ans) = t;
@@ -113,7 +142,7 @@ CAMLprim value ocaml_smf_get_next_event(value smf)
     event = smf_get_next_event(Smf_val(smf));
     if(event == NULL)
     {
-        exit(1);
+        smf_err(0);
     }
 
     ret = caml_alloc_tuple(7);
@@ -153,7 +182,7 @@ CAMLprim value ocaml_smf_new(value unit)
         free(t);
         /* Error */
         t = NULL;
-        exit(1);
+        smf_err(0);
     }
     ans = caml_alloc_custom(&smf_ops, sizeof(Smf_t*), 1, 0);
     Smf_t_val(ans) = t;
@@ -173,7 +202,7 @@ CAMLprim value ocaml_smf_track_new(value unit)
         free(t);
         /* Error */
         t = NULL;
-        exit(1);
+        smf_err(0);
     }
     ans = caml_alloc_custom(&track_ops, sizeof(Track_t*), 1, 0);
     Track_t_val(ans) = t;
@@ -197,7 +226,7 @@ CAMLprim value ocaml_smf_event_new_from_pointer(value msg, value length)
     event = smf_event_new_from_pointer(Caml_ba_data_val(msg), Int_val(length));
     if(event == NULL)
     {
-        exit(1);
+        smf_err(0);
     }
 
     ret = caml_alloc_tuple(7);
@@ -216,13 +245,36 @@ CAMLprim value ocaml_smf_event_new_from_pointer(value msg, value length)
     CAMLreturn(ret);
 }
 
+CAMLprim value ocaml_smf_event_new_from_bytes(value byte0, value byte1, value byte2)
+{
+    CAMLparam3(byte0, byte1, byte2);
+    CAMLlocal1(ret);
+    smf_event_t *event;
+    event = smf_event_new_from_bytes(Int_val(byte0), Int_val(byte1), Int_val(byte2));
+    if(event == NULL)
+    {
+        smf_err(0);
+    }
+
+    ret = create_event(event);
+
+    CAMLreturn(ret);
+}
+
+CAMLprim value ocaml_smf_event_delete(value event)
+{
+    CAMLparam1(event);
+    smf_event_delete(get_event(event));
+    CAMLreturn(Val_unit);
+}
+
 CAMLprim value ocaml_smf_track_add_event_seconds(value track, value event, value seconds)
 {
     CAMLparam3(track, event, seconds);
     float secs;
     secs = (float)Int_val(seconds);
     secs /= 1000.0f;
-    smf_track_add_event_seconds(Track_val(track), Event_val(Field(event,6)), secs);
+    smf_track_add_event_seconds(Track_val(track), get_event(event), secs);
     CAMLreturn(Val_unit);
 }
 
@@ -232,5 +284,24 @@ CAMLprim value ocaml_smf_save(value smf, value file)
     int ret;
     ret = smf_save(Smf_val(smf), String_val(file));
     CAMLreturn(Val_bool(ret));
+}
+
+CAMLprim value ocaml_smf_get_track_by_number(value smf, value trackno)
+{
+    CAMLparam2(smf, trackno);
+    CAMLlocal1(ret);
+    Track_t *t;
+    t = malloc(sizeof(Track_t));
+    t->t = smf_get_track_by_number(Smf_val(smf), Int_val(trackno));
+    if(t->t == NULL)
+    {
+        free(t);
+        /* Error */
+        t = NULL;
+        smf_err(0);
+    }
+    ret = caml_alloc_custom(&track_ops, sizeof(Track_t*), 1, 0);
+    Track_t_val(ret) = t;
+    CAMLreturn(ret);
 }
 
