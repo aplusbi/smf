@@ -11,7 +11,7 @@
 
 static int smf_err(int i)
 {
-  caml_raise_with_arg(*caml_named_value("smf_exn_error"), Val_int(i));
+    caml_raise_with_arg(*caml_named_value("smf_exn_error"), Val_int(i));
 }
 
 typedef struct
@@ -24,8 +24,7 @@ typedef struct
 
 static void finalize_smf(value s)
 {
-  Smf_t *t = Smf_t_val(s);
-
+  Smf_t *t = Smf_t_val(s); 
   if (t->t)
     smf_delete(t->t);
   free(t);
@@ -142,7 +141,8 @@ CAMLprim value ocaml_smf_get_next_event(value smf)
     event = smf_get_next_event(Smf_val(smf));
     if(event == NULL)
     {
-        smf_err(0);
+        /* end of file */
+        smf_err(1);
     }
 
     ret = create_event(event);

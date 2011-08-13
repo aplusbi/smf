@@ -1,5 +1,6 @@
 type error =
-    SmfNullReturn
+    | SmfNullReturn
+    | SmfEndOfFile
 
 exception Error of error
 

@@ -45,7 +45,7 @@ let wait_loop secs =
         if elapsed < secs then
             let t_ms = (Portmidi.Time.time ()) in
             let t = (Int32.to_float t_ms) /. 1000. in
-            Portmidi.Time.sleep 1; wait t
+            wait t
         else
             ()
     in
@@ -57,18 +57,24 @@ let _ =
     let st = Portmidi.open_output d 8 0 in
     let smf = Smf.load "test/bach_gavotte.mid" in
     Portmidi.Time.start 1;
-    while true do
-        let event = Smf.get_next_event smf in
-        match Smf.event_is_metadata event with
-        | true -> ()
-        | false ->
-                begin
-                    let {Smf.time_seconds=wait} = event in
-                    let str = (string_of_float wait) ^ "\n" in
-                    ignore (Unix.write Unix.stdout str 0 (String.length str));
-                    wait_loop wait;
-                    write_midi st event;
-                    ()
-                end;
-        ()
-    done
+    let rec loop () =
+        try
+            let event = Smf.get_next_event smf in
+            begin
+                match Smf.event_is_metadata event with
+                | true -> ()
+                | false ->
+                        let {Smf.time_seconds=wait} = event in
+                        let str = (string_of_float wait) ^ "\n" in
+                        ignore (Unix.write Unix.stdout str 0 (String.length str));
+                        wait_loop wait;
+                        write_midi st event;
+                        ()
+            end;
+            loop ()
+        with Smf.Error(_) ->
+            let str = "End of file\n" in
+            ignore (Unix.write Unix.stdout str 0 (String.length str))
+    in
+    loop ();
+    Portmidi.close st
