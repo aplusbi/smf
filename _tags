@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 1c5df54e646bd3d6a7de32acfabe5ed7)
+# DO NOT EDIT (digest: 65e5252cdf76054cd5f5bed76f4427b7)
 # Library ocaml_smf
 "src": include
 <src/*.ml{,i}>: oasis_library_ocaml_smf_ccopt
@@ -13,10 +13,10 @@
 <src/*.ml{,i}>: pkg_bigarray
 "src/smf_stubs.c": pkg_bigarray
 # Executable test
-<test/test.{native,byte}>: use_ocaml_smf
-<test/test.{native,byte}>: pkg_unix
-<test/test.{native,byte}>: pkg_ocaml_portmidi
-<test/test.{native,byte}>: pkg_bigarray
+"test/test.byte": use_ocaml_smf
+"test/test.byte": pkg_unix
+"test/test.byte": pkg_ocaml_portmidi
+"test/test.byte": pkg_bigarray
 <test/*.ml{,i}>: use_ocaml_smf
 <test/*.ml{,i}>: pkg_unix
 <test/*.ml{,i}>: pkg_ocaml_portmidi

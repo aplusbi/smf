@@ -27,7 +27,7 @@ Library ocaml_smf
 Executable test
   Path: test/
   Install: false
-  CompiledObject: best
+  CompiledObject: byte
   MainIs: test.ml
   BuildDepends: unix, bigarray, ocaml_portmidi, ocaml_smf
 
