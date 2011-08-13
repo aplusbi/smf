@@ -1,0 +1,11 @@
+_build/
+setup.log
+*.o
+*.cmo
+*.cmx
+*.cma
+*.cmxa
+*.cmi
+*.swp
+*.byte
+*.native
