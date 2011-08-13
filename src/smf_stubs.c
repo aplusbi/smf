@@ -91,7 +91,8 @@ static struct custom_operations event_ops =
 
 value create_event(smf_event_t *event)
 {
-    value ret, ans;
+    CAMLparam0();
+    CAMLlocal2(ret, ans);
     Event_t *et;
     ret = caml_alloc_tuple(7);
     Field(ret, 0) = Val_int(event->event_number);
@@ -106,7 +107,7 @@ value create_event(smf_event_t *event)
     Event_t_val(ans) = et;
     Field(ret, 6) = ans;
 
-    return ret;
+    CAMLreturn(ret);
 }
 
 smf_event_t *get_event(value event)
@@ -136,27 +137,15 @@ CAMLprim value ocaml_smf_load(value file)
 CAMLprim value ocaml_smf_get_next_event(value smf)
 {
     CAMLparam1(smf);
-    CAMLlocal2(ret,ans);
+    CAMLlocal1(ret);
     smf_event_t *event;
-    Event_t *et;
     event = smf_get_next_event(Smf_val(smf));
     if(event == NULL)
     {
         smf_err(0);
     }
 
-    ret = caml_alloc_tuple(7);
-    Field(ret, 0) = Val_int(event->event_number);
-    Field(ret, 1) = Val_int(event->delta_time_pulses);
-    Field(ret, 2) = Val_int(event->time_pulses);
-    Field(ret, 3) = caml_copy_double(event->time_seconds);
-    Field(ret, 4) = Val_int(event->track_number);
-    Field(ret, 5) = caml_ba_alloc_dims(CAML_BA_UINT8 | CAML_BA_C_LAYOUT, 1, (void*)event->midi_buffer, event->midi_buffer_length, NULL);
-    et = malloc(sizeof(Event_t));
-    et->t = event;
-    ans = caml_alloc_custom(&event_ops, sizeof(Event_t*), 1, 0);
-    Event_t_val(ans) = et;
-    Field(ret, 6) = ans;
+    ret = create_event(event);
 
     CAMLreturn(ret);
 }
@@ -165,7 +154,7 @@ CAMLprim value ocaml_smf_event_is_metadata(value event)
 {
     CAMLparam1(event);
     int ret;
-    smf_event_t *e = Event_val(Field(event, 6));
+    smf_event_t *e = get_event(event);
     ret = smf_event_is_metadata(e);
     CAMLreturn(Val_bool(ret));
 }
@@ -220,27 +209,15 @@ CAMLprim value ocaml_smf_add_track(value smf, value track)
 CAMLprim value ocaml_smf_event_new_from_pointer(value msg, value length)
 {
     CAMLparam2(msg, length);
-    CAMLlocal2(ret,ans);
+    CAMLlocal1(ret);
     smf_event_t *event;
-    Event_t *et;
     event = smf_event_new_from_pointer(Caml_ba_data_val(msg), Int_val(length));
     if(event == NULL)
     {
         smf_err(0);
     }
 
-    ret = caml_alloc_tuple(7);
-    Field(ret, 0) = Val_int(event->event_number);
-    Field(ret, 1) = Val_int(event->delta_time_pulses);
-    Field(ret, 2) = Val_int(event->time_pulses);
-    Field(ret, 3) = caml_copy_double(event->time_seconds);
-    Field(ret, 4) = Val_int(event->track_number);
-    Field(ret, 5) = caml_ba_alloc_dims(CAML_BA_UINT8 | CAML_BA_C_LAYOUT, 1, (void*)event->midi_buffer, event->midi_buffer_length, NULL);
-    et = malloc(sizeof(Event_t));
-    et->t = event;
-    ans = caml_alloc_custom(&event_ops, sizeof(Event_t*), 1, 0);
-    Event_t_val(ans) = et;
-    Field(ret, 6) = ans;
+    ret = create_event(event);
 
     CAMLreturn(ret);
 }
